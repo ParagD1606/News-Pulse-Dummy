@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Keyframes for Landing Page Animation */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Apply the custom animation names using Tailwind's utility names for the JSX above */
+.animate-fade-in-up {
+    animation-name: fade-in-up;
+}
+
+.animate-fade-in {
+    animation-name: fade-in;
+}
+
+/* NEW: Animation for Refresh Button */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* NEW: Utility class for spinning animation */
+.animate-spin-slow {
+    animation: spin 1s linear infinite;
+}
