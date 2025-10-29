@@ -18,6 +18,7 @@ const SUPPORTED_COUNTRIES = [
 // Categories list
 export const categories = [
   "general",
+  "politics", // <--- ADDED POLITICS
   "business",
   "technology",
   "sports",

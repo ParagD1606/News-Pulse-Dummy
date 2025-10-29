@@ -1,6 +1,13 @@
 import React, { useCallback } from "react";
 import { HiOutlineBookmark, HiBookmark, HiVolumeUp } from "react-icons/hi";
 
+// Function to detect if content is likely Hindi based on the first few characters (Devanagari script)
+const isLikelyHindi = (text) => {
+    // The range \u0900-\u097F covers most Devanagari characters
+    // Check if any Devanagari characters are present in the first 50 characters
+    return text && /[\u0900-\u097F]/.test(text.slice(0, 50));
+};
+
 const NewsCard = ({ article, onBookmark, isBookmarked }) => {
   
   const handleTextToSpeech = useCallback(() => {
@@ -16,7 +23,12 @@ const NewsCard = ({ article, onBookmark, isBookmarked }) => {
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 1;
     utterance.pitch = 1;
-    utterance.lang = "en-US";
+    
+    // --- FIX: Dynamically set language ---
+    // If the text is detected as Hindi, set the language to hi-IN.
+    // Otherwise, default to English (en-US).
+    utterance.lang = isLikelyHindi(textToSpeak) ? "hi-IN" : "en-US"; 
+    // ------------------------------------
 
     window.speechSynthesis.speak(utterance);
   }, [article.title, article.description, article.content]);

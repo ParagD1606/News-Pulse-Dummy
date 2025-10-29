@@ -121,6 +121,7 @@ const Analytics = ({
   setCategory, 
   categories, 
   searchQuery,
+  setSearchQuery, // <--- ACCEPTED NEW PROP
   country,
   setCountry,
   SUPPORTED_COUNTRIES
@@ -144,11 +145,14 @@ const Analytics = ({
     : `${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News in ${currentCountryName}`; 
   
   const handleCategoryChange = (e) => {
-    // Note: This does not clear searchQuery, as Analytics does not expose search input
+    // FIX: Clear searchQuery here to ensure the data source switches fully to category view
+    setSearchQuery(""); 
     setCategory(e.target.value);
   }
 
   const handleCountryChange = (e) => {
+    // Ensure search is also cleared when country changes, switching back to headline mode
+    setSearchQuery(""); 
     setCountry(e.target.value);
   }
 
@@ -294,7 +298,7 @@ const Analytics = ({
                     <select
                         value={currentCategory}
                         onChange={handleCategoryChange}
-                        className="w-full appearance-none py-2.5 pl-4 pr-10 text-base border-2 border-blue-500/70 dark:border-blue-600 rounded-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-blue-400/30 transition-all"
+                        className="w-full appearance-none py-2.5 pl-4 pr-10 text-base border-2 border-blue-500/70 dark:border-blue-600 rounded-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-400/30 transition-all"
                         disabled={!!searchQuery}
                     >
                         {categories.map((cat) => (
