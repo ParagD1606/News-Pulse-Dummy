@@ -106,7 +106,7 @@ const AppContent = () => {
             articles={newsArticles} 
             currentCategory={category} 
             searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} // <--- ADDED THIS PROP
+            setSearchQuery={setSearchQuery} // <--- PROP PASSED HERE
             theme={theme}
             // ⬅️ Passing required props to Analytics
             categories={categories}

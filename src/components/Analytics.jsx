@@ -146,13 +146,13 @@ const Analytics = ({
   
   const handleCategoryChange = (e) => {
     // FIX: Clear searchQuery here to ensure the data source switches fully to category view
-    setSearchQuery(""); 
+    if (setSearchQuery) setSearchQuery(""); 
     setCategory(e.target.value);
   }
 
   const handleCountryChange = (e) => {
-    // Ensure search is also cleared when country changes, switching back to headline mode
-    setSearchQuery(""); 
+    // FIX: Clear search here to ensure the data source switches fully to headline mode
+    if (setSearchQuery) setSearchQuery("");
     setCountry(e.target.value);
   }
 

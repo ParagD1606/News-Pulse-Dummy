@@ -157,8 +157,8 @@ const Landing = () => {
 
             <FeatureCard
                 icon={<HiViewList className="w-8 h-8" />}
-                title="Advanced Pagination"
-                description="Experience smooth navigation through extensive search results with optimized pagination controls."
+                title="Advanced Pagination and Caching"
+                description="Experience smooth navigation through extensive search results with optimized pagination controls and intelligent caching mechanisms."
             />
             
             <FeatureCard
