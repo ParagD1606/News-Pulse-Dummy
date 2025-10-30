@@ -1,8 +1,20 @@
 import React, { useMemo } from "react";
 import { HiChartBar } from "react-icons/hi";
 import { Pie, Bar, Line } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement, TimeScale, Title } from "chart.js";
-import 'chartjs-adapter-date-fns';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  TimeScale,
+  Title,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
 
 ChartJS.register(
   ArcElement,
@@ -30,14 +42,14 @@ const STOP_WORDS = new Set([
   "some","much","many","very","up","down","over","under","before","after","while","when",
   "what","where","why","who","whom","whose","since","until","upon","through","into","onto",
   "off","between","among","around","above","below","next","last","first","second","third",
-  "like","than","then","so","we","us","our","them","they","their"
+  "like","than","then","so","we","us","our","them","they","their",
 ]);
 
 // ================== HELPERS ==================
 const getWordFrequencies = (articles) => {
-  const text = articles.map(a => `${a.title} ${a.description || ""}`).join(" ").toLowerCase();
+  const text = articles.map((a) => `${a.title} ${a.description || ""}`).join(" ").toLowerCase();
   const cleaned = text.replace(/[^a-z\s]/g, " ");
-  const words = cleaned.split(/\s+/).filter(w => w.length >= 4 && !STOP_WORDS.has(w));
+  const words = cleaned.split(/\s+/).filter((w) => w.length >= 4 && !STOP_WORDS.has(w));
 
   const counts = words.reduce((acc, w) => {
     acc[w] = (acc[w] || 0) + 1;
@@ -67,25 +79,13 @@ const calculateSourceDistribution = (articles) => {
   return final;
 };
 
-const calculateCategoryDistribution = (articles, currentCategory, searchQuery) => {
-  const isSearch = !!searchQuery;
-  // Convert the category 
-  const contextCategory = currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1);
-
+const calculateCategoryDistribution = (articles) => {
   const counts = articles.reduce((acc, a) => {
-    if (isSearch) {
-        acc["Search Results"] = (acc["Search Results"] || 0) + 1;
-        return acc;
-    }
-
-    const category = contextCategory;
-
+    const category = a.category || "General";
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
-
-  const sorted = Object.entries(counts).sort(([, a], [, b]) => b - a);
-  return sorted.map(([label, value]) => ({ label, value }));
+  return Object.entries(counts).map(([label, value]) => ({ label, value }));
 };
 
 const calculateTimeSeries = (articles) => {
@@ -94,12 +94,12 @@ const calculateTimeSeries = (articles) => {
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(now.getDate() - i);
-    const key = d.toISOString().slice(0,10);
+    const key = d.toISOString().slice(0, 10);
     counts[key] = 0;
   }
 
-  articles.forEach(a => {
-    const date = new Date(a.publishedAt).toISOString().slice(0,10);
+  articles.forEach((a) => {
+    const date = new Date(a.publishedAt).toISOString().slice(0, 10);
     if (counts[date] !== undefined) counts[date]++;
   });
 
@@ -108,53 +108,25 @@ const calculateTimeSeries = (articles) => {
 
 const generateColors = (count) => {
   const colors = [
-    "#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#6366f1", 
-    "#ec4899", "#84cc16", "#64748b", "#a855f7",
+    "#3b82f6","#f59e0b","#10b981","#ef4444","#6366f1",
+    "#ec4899","#84cc16","#64748b","#a855f7",
   ];
   return Array.from({ length: count }, (_, i) => colors[i % colors.length]);
 };
 
 // ================== MAIN COMPONENT ==================
-const Analytics = ({ 
-  articles, 
-  currentCategory, 
-  setCategory, 
-  categories, 
-  searchQuery,
-  setSearchQuery, // <--- ACCEPTED NEW PROP
-  country,
-  setCountry,
-  SUPPORTED_COUNTRIES
-}) => {
+const Analytics = ({ articles, country, setCountry, SUPPORTED_COUNTRIES }) => {
   const sourceData = useMemo(() => calculateSourceDistribution(articles), [articles]);
   const wordData = useMemo(() => getWordFrequencies(articles), [articles]);
-  
-  const categoryData = useMemo(() => calculateCategoryDistribution(articles, currentCategory, searchQuery), [articles, currentCategory, searchQuery]);
-  
+  const categoryData = useMemo(() => calculateCategoryDistribution(articles), [articles]);
   const timeData = useMemo(() => calculateTimeSeries(articles), [articles]);
   const totalArticles = articles.length;
-  
+
   const currentCountryName = useMemo(() => {
-    return SUPPORTED_COUNTRIES.find(c => c.code === country)?.name || country.toUpperCase();
+    return SUPPORTED_COUNTRIES.find((c) => c.code === country)?.name || country.toUpperCase();
   }, [country, SUPPORTED_COUNTRIES]);
 
-  const context = searchQuery 
-    ? `Results for "${searchQuery}"`
-    : currentCategory === "general"
-    ? `Top Headlines in ${currentCountryName}`
-    : `${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)} News in ${currentCountryName}`; 
-  
-  const handleCategoryChange = (e) => {
-    // FIX: Clear searchQuery here to ensure the data source switches fully to category view
-    if (setSearchQuery) setSearchQuery(""); 
-    setCategory(e.target.value);
-  }
-
-  const handleCountryChange = (e) => {
-    // FIX: Clear search here to ensure the data source switches fully to headline mode
-    if (setSearchQuery) setSearchQuery("");
-    setCountry(e.target.value);
-  }
+  const handleCountryChange = (e) => setCountry(e.target.value);
 
   if (totalArticles === 0) {
     return (
@@ -165,17 +137,16 @@ const Analytics = ({
     );
   }
 
+  // Chart Data
   const pieData = {
-    labels: sourceData.map(d => d.label),
-    datasets: [
-      {
-        label: "# of Articles",
-        data: sourceData.map(d => d.value),
-        backgroundColor: generateColors(sourceData.length),
-        borderColor: "#fff",
-        borderWidth: 2,
-      },
-    ],
+    labels: sourceData.map((d) => d.label),
+    datasets: [{
+      label: "# of Articles",
+      data: sourceData.map((d) => d.value),
+      backgroundColor: generateColors(sourceData.length),
+      borderColor: "#fff",
+      borderWidth: 2,
+    }],
   };
 
   const pieOptions = {
@@ -198,26 +169,17 @@ const Analytics = ({
   };
 
   const barData = {
-    labels: categoryData.map(d => d.label),
-    datasets: [
-      {
-        label: "# of Articles",
-        data: categoryData.map(d => d.value),
-        backgroundColor: generateColors(categoryData.length),
-      },
-    ],
+    labels: categoryData.map((d) => d.label),
+    datasets: [{
+      label: "# of Articles",
+      data: categoryData.map((d) => d.value),
+      backgroundColor: generateColors(categoryData.length),
+    }],
   };
 
   const barOptions = {
     responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (context) => `${context.label}: ${context.parsed.y} articles`,
-        },
-      },
-    },
+    plugins: { legend: { display: false } },
     scales: {
       x: { ticks: { color: "rgb(156,163,175)" } },
       y: { ticks: { color: "rgb(156,163,175)" }, beginAtZero: true },
@@ -225,18 +187,16 @@ const Analytics = ({
   };
 
   const lineData = {
-    labels: timeData.map(d => d.date),
-    datasets: [
-      {
-        label: "# of Articles",
-        data: timeData.map(d => d.value),
-        fill: false,
-        borderColor: "#3b82f6",
-        backgroundColor: "#3b82f6",
-        tension: 0.3,
-        pointRadius: 5,
-      },
-    ],
+    labels: timeData.map((d) => d.date),
+    datasets: [{
+      label: "# of Articles",
+      data: timeData.map((d) => d.value),
+      fill: false,
+      borderColor: "#3b82f6",
+      backgroundColor: "#3b82f6",
+      tension: 0.3,
+      pointRadius: 5,
+    }],
   };
 
   const lineOptions = {
@@ -249,139 +209,97 @@ const Analytics = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto"> 
-      
-      {/* ⬅️ NEW: Top Filter Section (similar to Home.jsx structure) */}
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
       <div className="px-6 py-6 sm:py-8 border-b border-gray-200 dark:border-gray-700/50 shadow-sm dark:shadow-none">
-
-        {/* Header/Context Title */}
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between pb-4 mb-4 border-b border-blue-500/30">
-            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
-              <HiChartBar className="w-9 h-9 text-blue-600" />
-              News Analytics Dashboard
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-3 sm:mt-0 hidden sm:block">
-              Analyzing <span className="font-bold text-blue-500">{totalArticles}</span> articles in <span className="font-semibold text-blue-400">“{context}”</span>
-            </p>
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white flex items-center gap-3">
+            <HiChartBar className="w-9 h-9 text-blue-600" />
+            News Analytics Dashboard
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mt-3 sm:mt-0 hidden sm:block">
+            Analyzing <span className="font-bold text-blue-500">{totalArticles}</span> articles in{" "}
+            <span className="font-semibold text-blue-400">{currentCountryName}</span>
+          </p>
         </div>
 
-        {/* Dropdowns in one row */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
-          
-            {/* Country Dropdown */}
-            <div className="relative w-full sm:w-48 cursor-pointer">
-                {SUPPORTED_COUNTRIES && (
-                    <select
-                        value={country}
-                        onChange={handleCountryChange}
-                        className="w-full appearance-none py-2.5 pl-4 pr-10 text-base border-2 border-blue-500/70 dark:border-blue-600 rounded-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-blue-400/30 transition-all"
-                        disabled={!!searchQuery}
-                    >
-                        {SUPPORTED_COUNTRIES.map((c) => (
-                            <option key={c.code} value={c.code}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                )}
-                <svg
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 dark:text-blue-400 pointer-events-none transition-transform duration-300"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
-            
-            {/* Category Dropdown */}
-            <div className="relative w-full sm:w-48 cursor-pointer">
-                {categories && (
-                    <select
-                        value={currentCategory}
-                        onChange={handleCategoryChange}
-                        className="w-full appearance-none py-2.5 pl-4 pr-10 text-base border-2 border-blue-500/70 dark:border-blue-600 rounded-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-400/30 transition-all"
-                        disabled={!!searchQuery}
-                    >
-                        {categories.map((cat) => (
-                            <option key={cat} value={cat}>
-                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                            </option>
-                        ))}
-                    </select>
-                )}
-                <svg
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 dark:text-blue-400 pointer-events-none transition-transform duration-300"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
-
+        {/* Country Dropdown */}
+        <div className="flex justify-center items-center gap-4 mb-6">
+          <div className="relative w-full sm:w-48 cursor-pointer">
+            <select
+              value={country}
+              onChange={handleCountryChange}
+              className="w-full appearance-none py-2.5 pl-4 pr-10 text-base border-2 border-blue-500/70 dark:border-blue-600 rounded-full bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-semibold shadow-md focus:outline-none focus:ring-4 focus:ring-blue-400/30 transition-all"
+            >
+              {SUPPORTED_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <svg
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 dark:text-blue-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
-        
-        {/* Mobile/Small Screen Context */}
-        <p className="text-md text-gray-600 dark:text-gray-400 sm:hidden text-center mb-4">
-            Analyzing <span className="font-bold text-blue-500">{totalArticles}</span> articles in <span className="font-semibold text-blue-400">“{context}”</span>
-        </p>
-
       </div>
-      {/* ⬅️ END: Top Filter Section */}
 
-      {/* GRID CHARTS (p-6 added for internal padding) */}
+      {/* Charts Grid */}
       <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-10">
-        
-        {/* PIE CHART */}
-        <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition transform hover:scale-[1.01]">
-          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">Source Distribution</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Breakdown of articles by source.</p>
+        {/* PIE */}
+        <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">
+            Source Distribution
+          </h3>
           <div className="flex justify-center items-center h-96">
             <Pie data={pieData} options={pieOptions} />
           </div>
         </div>
 
-        {/* CATEGORY BAR CHART */}
-        <div className="bg-gradient-to-b from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition transform hover:scale-[1.01]">
-          <div className="flex justify-between items-center mb-4 border-b pb-2 border-gray-200 dark:border-gray-700">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Articles by Category</h3>
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Showing count of articles in the currently selected filter context.
-          </p>
+        {/* CATEGORY BAR */}
+        <div className="bg-gradient-to-b from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">
+            Articles by Category
+          </h3>
           <div className="flex justify-center items-center h-96">
             <Bar data={barData} options={barOptions} />
           </div>
         </div>
 
         {/* WORD CLOUD */}
-        <div className="bg-gradient-to-b from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition transform hover:scale-[1.01]">
-          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">Frequent Terms Word Cloud</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Top 30 recurring keywords in titles & descriptions.</p>
+        <div className="bg-gradient-to-b from-white to-blue-50 dark:from-gray-800 dark:to-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">
+            Frequent Terms Word Cloud
+          </h3>
           <div className="w-full max-h-[28rem] overflow-y-auto p-3 rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-3">
               {wordData.slice(0, 30).map((word, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 rounded-full text-white bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-400 dark:to-purple-400 transition-all duration-300 hover:scale-110 cursor-default"
+                  className="px-3 py-1 rounded-full text-white bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-400 dark:to-purple-400 transition-all hover:scale-110"
                   style={{
                     fontSize: `${14 + (word.value / wordData[0].value) * 20}px`,
                     opacity: `${0.6 + (word.value / wordData[0].value) * 0.4}`,
                     fontWeight: 700,
                   }}
-                  title={`Count: ${word.value}`}
                 >
                   {word.text}
                 </span>
               ))}
             </div>
-            <p className="mt-4 text-xs text-gray-400 dark:text-gray-500 italic text-center">
-              Tip: Word size & opacity represent frequency.
-            </p>
           </div>
         </div>
 
-        {/* TIME SERIES LINE CHART */}
-        <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transition transform hover:scale-[1.01]">
-          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">Articles Over Last 7 Days</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Daily article count trend.</p>
+        {/* LINE */}
+        <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+          <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white border-b pb-2 border-gray-200 dark:border-gray-700">
+            Articles Over Last 7 Days
+          </h3>
           <div className="flex justify-center items-center h-96">
             <Line data={lineData} options={lineOptions} />
           </div>

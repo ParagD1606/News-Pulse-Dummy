@@ -10,19 +10,18 @@ import Registration from "./components/Registration";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import { fetchTopHeadlines, SUPPORTED_COUNTRIES } from "./services/newsApi";
-import { categories } from "./components/Home"; // ⬅️ Import categories for Analytics
+import { categories } from "./components/Home";
 
 const AppContent = () => {
   const location = useLocation();
-
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-  const [bookmarks, setBookmarks] = useState(() =>
-    JSON.parse(localStorage.getItem("bookmarks") || "[]")
+  const [bookmarks, setBookmarks] = useState(
+    () => JSON.parse(localStorage.getItem("bookmarks") || "[]")
   );
   const [newsArticles, setNewsArticles] = useState([]);
   const [category, setCategory] = useState("general");
   const [searchQuery, setSearchQuery] = useState("");
-  const [country, setCountry] = useState("us"); 
+  const [country, setCountry] = useState("us");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ const AppContent = () => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Fetch news when category/search/country changes
+  // Fetch news
   useEffect(() => {
     const loadNews = async () => {
       const data = await fetchTopHeadlines(category, searchQuery, country);
@@ -40,8 +39,8 @@ const AppContent = () => {
   }, [category, searchQuery, country]);
 
   const handleBookmark = (article) => {
-    const updated = bookmarks.find(a => a.url === article.url)
-      ? bookmarks.filter(a => a.url !== article.url)
+    const updated = bookmarks.find((a) => a.url === article.url)
+      ? bookmarks.filter((a) => a.url !== article.url)
       : [...bookmarks, article];
     setBookmarks(updated);
     localStorage.setItem("bookmarks", JSON.stringify(updated));
@@ -63,7 +62,13 @@ const AppContent = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme === "dark" ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        theme === "dark"
+          ? "bg-gray-900 text-gray-100"
+          : "bg-gray-100 text-gray-900"
+      }`}
+    >
       {showNavbar && (
         <Navbar
           theme={theme}
@@ -72,49 +77,56 @@ const AppContent = () => {
           setSearchQuery={setSearchQuery}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
-        />    
+        />
       )}
 
-      {/* Padding space for fixed Navbar */}
-      {showNavbar && <div className="pt-20" />} 
+      {showNavbar && <div className="pt-20" />}
 
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/home" element={
-          <Home
-            articles={newsArticles}
-            bookmarks={bookmarks}
-            handleBookmark={handleBookmark}
-            category={category}
-            setCategory={setCategory}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            country={country}             
-            setCountry={setCountry} 
-          />
-        } />
-        <Route path="/reels" element={
-          <Reels 
-            articles={newsArticles} 
-            currentCategory={category} 
-            setCategory={setCategory}
-          />
-        } />
-        <Route path="/bookmarks" element={<Bookmarks bookmarks={bookmarks} handleBookmark={handleBookmark} />} />
-        <Route path="/analytics" element={
-          <Analytics 
-            articles={newsArticles} 
-            currentCategory={category} 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} // <--- PROP PASSED HERE
-            theme={theme}
-            // ⬅️ Passing required props to Analytics
-            categories={categories}
-            country={country}
-            setCountry={setCountry}
-            SUPPORTED_COUNTRIES={SUPPORTED_COUNTRIES}
-          />
-        } />
+        <Route
+          path="/home"
+          element={
+            <Home
+              articles={newsArticles}
+              bookmarks={bookmarks}
+              handleBookmark={handleBookmark}
+              category={category}
+              setCategory={setCategory}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              country={country}
+              setCountry={setCountry}
+            />
+          }
+        />
+        <Route
+          path="/reels"
+          element={
+            <Reels
+              articles={newsArticles}
+              currentCategory={category}
+              setCategory={setCategory}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+          }
+        />
+        <Route
+          path="/bookmarks"
+          element={<Bookmarks bookmarks={bookmarks} handleBookmark={handleBookmark} />}
+        />
+        <Route
+          path="/analytics"
+          element={
+            <Analytics
+              articles={newsArticles}
+              country={country}
+              setCountry={setCountry}
+              SUPPORTED_COUNTRIES={SUPPORTED_COUNTRIES}
+            />
+          }
+        />
         <Route path="/profile" element={<Profile bookmarks={bookmarks} />} />
         <Route path="/registration" element={<Registration />} />
         <Route path="/login" element={<Login />} />
