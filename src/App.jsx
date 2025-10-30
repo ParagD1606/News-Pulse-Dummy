@@ -124,6 +124,7 @@ const AppContent = () => {
               country={country}
               setCountry={setCountry}
               SUPPORTED_COUNTRIES={SUPPORTED_COUNTRIES}
+              searchQuery={searchQuery}
             />
           }
         />

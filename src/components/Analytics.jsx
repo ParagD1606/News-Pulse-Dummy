@@ -115,7 +115,8 @@ const generateColors = (count) => {
 };
 
 // ================== MAIN COMPONENT ==================
-const Analytics = ({ articles, country, setCountry, SUPPORTED_COUNTRIES }) => {
+const Analytics = ({ articles, country, setCountry, SUPPORTED_COUNTRIES, searchQuery }) => {
+
   const sourceData = useMemo(() => calculateSourceDistribution(articles), [articles]);
   const wordData = useMemo(() => getWordFrequencies(articles), [articles]);
   const categoryData = useMemo(() => calculateCategoryDistribution(articles), [articles]);
@@ -129,13 +130,26 @@ const Analytics = ({ articles, country, setCountry, SUPPORTED_COUNTRIES }) => {
   const handleCountryChange = (e) => setCountry(e.target.value);
 
   if (totalArticles === 0) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 pt-24 min-h-screen flex flex-col justify-center items-center text-center">
-        <h2 className="text-4xl font-extrabold mb-4 text-gray-900 dark:text-white">News Analytics</h2>
-        <p className="text-lg text-gray-600 dark:text-gray-400">No articles available to generate analytics.</p>
-      </div>
-    );
-  }
+  return (
+    <div className="max-w-7xl mx-auto p-6 pt-24 min-h-screen flex flex-col justify-center items-center text-center">
+      <h2 className="text-4xl font-extrabold mb-4 text-gray-900 dark:text-white">
+        News Analytics
+      </h2>
+      <p className="text-lg text-gray-600 dark:text-gray-400">
+        No articles available to generate analytics
+        {searchQuery ? (
+          <>
+            {" "}for "<span className="font-semibold text-blue-500">{searchQuery}</span>".
+          </>
+        ) : (
+          ". "
+        )}
+        <br />Please change search criteria or select a different country or category.
+      </p>
+    </div>
+  );
+}
+
 
   // Chart Data
   const pieData = {
